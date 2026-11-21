@@ -173,7 +173,11 @@ function farbe(item) {
   input.type = "color";
   input.setAttribute("aria-label", item.label);
   input.addEventListener("change", () => send(item.name, hexZuHsb(input.value)));
-  store.subscribe(item.name, (i) => (input.value = hsbZuHex(i.state)));
+  // Farbton und Sättigung zeigen, auch wenn die Lampe aus ist (Helligkeit 0)
+  store.subscribe(item.name, (i) => {
+    const [h, sat, v] = String(i.state).split(",");
+    if (v !== undefined) input.value = hsbZuHex(`${h},${sat},100`);
+  });
   return el("div", "d-flex gap-2 align-items-center", input, schalter(item));
 }
 
