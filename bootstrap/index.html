@@ -16,9 +16,59 @@
     .nav-pills .nav-link { white-space: nowrap; }
     #status { width: .8rem; height: .8rem; }
     .zahl { width: 3.6em; font-variant-numeric: tabular-nums; }
+    [hidden] { display: none !important; }
+    /* Auswahllisten so breit, dass auch „intern“ und „extern“ passen */
+    .auswahl { min-width: 9.5rem; }
+    .bild { max-width: 96px; }
+    #titel { min-width: 0; }
+    /* Akzentfarbe aus den Einstellungen (--akzent, gesetzt von ansicht.js) */
+    .nav-pills { --bs-nav-pills-link-active-bg: var(--akzent); }
+    .nav-link:not(.active), .btn-link { color: var(--akzent); }
+    [data-bs-theme="dark"] .nav-link:not(.active),
+    [data-bs-theme="dark"] .btn-link {
+      color: color-mix(in srgb, var(--akzent) 45%, white); }
+    .btn-primary { --bs-btn-bg: var(--akzent); --bs-btn-border-color: var(--akzent);
+      --bs-btn-hover-bg: var(--akzent); --bs-btn-hover-border-color: var(--akzent);
+      --bs-btn-active-bg: var(--akzent); }
+    .form-check-input:checked { background-color: var(--akzent);
+      border-color: var(--akzent); }
+    .form-range::-webkit-slider-thumb { background-color: var(--akzent); }
+    .form-range::-moz-range-thumb { background-color: var(--akzent); }
+    /* Farben für das Verlaufsdiagramm (history.js liest sie) */
+    body { --accent: var(--akzent); --muted: var(--bs-secondary-color);
+      --line: var(--bs-border-color); }
+    /* Fenster aus ../js/dialog.js */
+    .dialog { width: min(560px, calc(100% - 24px)); padding: 16px;
+      border: 1px solid var(--bs-border-color);
+      border-radius: var(--bs-border-radius-lg);
+      background: var(--bs-body-bg); color: var(--bs-body-color); }
+    .dialog::backdrop { background: rgb(0 0 0 / .5); }
+    .dialog > header { display: flex; align-items: center; gap: 8px; }
+    .dialog h2 { flex: 1; margin: 0; font-size: 1.15rem; }
+    .dialog-close { width: 44px; height: 44px; border: 0; border-radius: 50%;
+      background: transparent; color: inherit; }
+    .chart { position: relative; height: 260px; }
+    .segmented { display: flex; gap: 6px; margin-bottom: 10px; }
+    .segmented button { flex: 1; min-height: 44px; border: 1px solid var(--akzent);
+      border-radius: var(--bs-border-radius); background: transparent; color: inherit; }
+    .segmented button[aria-pressed="true"] { background: var(--akzent); color: #fff; }
+    .hint { color: var(--bs-secondary-color); font-size: .875rem; }
+    /* Sperrbildschirm aus ../js/lock.js */
+    .lock-screen { position: fixed; inset: 0; z-index: 1100; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; background: var(--bs-body-bg); color: var(--bs-body-color); }
+    .lock-title { margin: 0; font-size: 1.25rem; }
+    .lock-dots { margin: 0; min-height: 1.5em; letter-spacing: .4em;
+      color: var(--akzent); }
+    .lock-pad { display: grid; grid-template-columns: repeat(3, 72px); gap: 12px; }
+    .lock-pad button { width: 72px; height: 72px; border-radius: 50%;
+      border: 1px solid var(--bs-border-color); background: var(--bs-tertiary-bg);
+      color: var(--bs-body-color); font-size: 1.5rem; }
+    .lock-pad button:disabled { visibility: hidden; }
   </style>
   <!-- aus dem Dashboard: Bibliothek und Einstellungen -->
   <script src="../lib/openhab.min.js"></script>
+  <script src="../lib/chart.umd.min.js"></script>
   <script src="../config.js"></script>
   <script type="module" src="ansicht.js"></script>
 </head>
@@ -28,6 +78,10 @@
       <span id="status" class="rounded-circle bg-secondary" role="img"></span>
       <span class="navbar-brand me-auto text-truncate" id="titel">…</span>
       <time id="uhr" class="fs-5 font-monospace"></time>
+      <button class="btn btn-outline-secondary border-0 fs-5" id="sperren"
+        hidden>🔒︎</button>
+      <button class="btn btn-outline-secondary border-0 fs-5"
+        id="einstellungen">⚙︎</button>
     </div>
     <div class="container-fluid pt-2">
       <ul class="nav nav-pills w-100" id="raeume" role="tablist"></ul>

@@ -12,7 +12,7 @@
 
 ## Idee
 
-Viele Teams und Kunden arbeiten mit [Bootstrap](https://getbootstrap.com). Diese Ansicht baut das komplette Dashboard – Übersicht, Räume, Gerätekarten, Echtzeit – mit Bootstrap-Komponenten: Navbar, Nav-Pills, Cards, List-Groups, Form-Switch, Form-Range und Button-Groups. Hell und dunkel folgen dem System (`data-bs-theme`).
+Viele Teams und Kunden arbeiten mit [Bootstrap](https://getbootstrap.com). Diese Ansicht baut das komplette Dashboard – Übersicht, Räume, Gerätekarten, Echtzeit – mit Bootstrap-Komponenten: Navbar, Nav-Pills, Cards, List-Groups, Form-Switch, Form-Range und Button-Groups. Hell und dunkel folgen dem System (`data-bs-theme`) oder der Wahl in den Einstellungen.
 
 ## Mehrwert
 
@@ -37,7 +37,14 @@ Die Ansicht liest Adresse, Token, oberste Gruppe und Übersicht aus der `config.
 
 ## Unterschiede zur Standard-Ansicht
 
-Farben wählt der Farbwähler des Browsers (`<input type="color">`, umgerechnet nach HSB). Gerätemodule, Verlaufsdiagramme und der Sperrbildschirm sind der Standard-Ansicht vorbehalten.
+Farben wählt der Farbwähler des Browsers (`<input type="color">`, umgerechnet nach HSB). Die eigenen Gerätemodule (Lampe, Thermostat, Wetter) sind der Standard-Ansicht vorbehalten.
+
+Aus dem Dashboard übernommen (`../js/`):
+
+- **Einstellungen** (Zahnrad): Sprache (de, en, fr), Akzentfarbe (Blau, Grün, Orange, Violett, Petrol – alle mit weißer Schrift lesbar), hell/dunkel/wie System. Gemerkt im Browser; Sprache und Modus gelten auch für die anderen Ansichten.
+- **Sperrbildschirm** (Schloss) mit der PIN aus `config.js` (`lock`).
+- **Verlaufsdiagramme**: Ein Klick auf einen Zahlenwert zeigt 6 h, 24 h oder 7 Tage (braucht Persistence, siehe Buch).
+- **Bilder** (`Image`-Items wie die Karte des Saugroboters) als Bild.
 
 Enthält [Bootstrap](https://github.com/twbs/bootstrap) 5.3.8, nur CSS (MIT, `bootstrap/LICENSE.bootstrap`).
 

@@ -8,20 +8,40 @@
 import { createController } from "../js/controller.js";
 import { baseType, isControl } from "../js/widgets.js";
 import { formatState, numberOf } from "../js/format.js";
-import { locale, setLanguage, t } from "../js/i18n.js";
+import { language, languages, locale, setLanguage, t } from "../js/i18n.js";
+import { openDialog } from "../js/dialog.js";
+import { openHistory } from "../js/history.js";
+import { setupLock } from "../js/lock.js";
 
 const config = window.DASHBOARD_CONFIG;
 const params = new URLSearchParams(location.search);
 const $ = (selector) => document.querySelector(selector);
 
+// ─── Einstellungen merken (gleiche Schlüssel wie das Dashboard) ─────────────
+function gemerkt(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function merken(key, value) {
+  try { localStorage.setItem(key, value); } catch { /* privates Fenster */ }
+}
+
 // ─── Hell oder dunkel: Bootstrap 5.3 liest data-bs-theme ────────────────────
 const dunkel = matchMedia("(prefers-color-scheme: dark)");
-const modus = () => (document.documentElement.dataset.bsTheme =
-  dunkel.matches ? "dark" : "light");
-modus();
-dunkel.addEventListener("change", modus);
+let modus = gemerkt("mode") ?? "auto";      // auto, light oder dark
+const hellDunkel = () => (document.documentElement.dataset.bsTheme =
+  modus === "auto" ? (dunkel.matches ? "dark" : "light") : modus);
+hellDunkel();
+dunkel.addEventListener("change", hellDunkel);
 
-setLanguage(params.get("lang") ?? config.language ?? "de");
+// ─── Akzentfarbe: alle mit weißer Schrift lesbar (Kontrast ≥ 4,5:1) ─────────
+const AKZENTE = [["Blau", "#0d6efd"], ["Grün", "#146c43"], ["Orange", "#a35200"],
+  ["Violett", "#6f42c1"], ["Petrol", "#0f766e"]];
+let akzent = gemerkt("bs-akzent") ?? AKZENTE[0][1];
+const akzentSetzen = () =>
+  document.documentElement.style.setProperty("--akzent", akzent);
+akzentSetzen();
+
+setLanguage(params.get("lang") ?? gemerkt("lang") ?? config.language ?? "de");
 document.title = `${config.title} · Bootstrap`;
 $("#titel").textContent = config.title;
 
@@ -117,7 +137,7 @@ function auswahl(item, optionen) {
     return knopf(o.label || o.command, item.label, () => send(item.name, o.command),
       "btn-primary");
   }
-  const select = el("select", "form-select w-auto",
+  const select = el("select", "form-select w-auto auswahl",
     ...optionen.map((o) => new Option(o.label || o.command, o.command)));
   select.setAttribute("aria-label", item.label);
   select.addEventListener("change", () => send(item.name, select.value));
@@ -178,8 +198,27 @@ function bedienelement(item) {
   return anzeige(item);
 }
 
+const ZAHLEN = ["Number", "Dimmer", "Rollershutter"];
+
 function anzeige(item) {
-  const wert = el("span", "text-body-secondary text-end");
+  const typ = baseType(item);
+  if (typ === "Image") {
+    const bild = el("img", "bild rounded");
+    bild.alt = item.label;
+    store.subscribe(item.name, (i) => {
+      bild.hidden = !String(i.state).startsWith("data:image");
+      if (!bild.hidden) bild.src = i.state;
+    });
+    return bild;
+  }
+  // Zahlen öffnen per Klick ihren Verlauf (wenn openHAB Verläufe liefert)
+  const verlauf = ZAHLEN.includes(typ) && controller.loadHistory;
+  const wert = verlauf ? el("button", "btn btn-link p-0 text-end zahl-link")
+    : el("span", "text-body-secondary text-end");
+  if (verlauf) {
+    wert.setAttribute("aria-label", `${item.label}: ${t("history")}`);
+    wert.addEventListener("click", () => openHistory(item, controller.loadHistory));
+  }
   store.subscribe(item.name, (i) => (wert.textContent = formatState(i)));
   return wert;
 }
@@ -220,9 +259,10 @@ function uebersicht() {
     });
 }
 
+let aktuell = params.get("room") ?? "overview";
+
 function seiten() {
   const liste = [{ name: "overview", label: t("overview") }, ...controller.rooms()];
-  let aktuell = params.get("room") ?? "overview";
   const reiter = liste.map((seite) => {
     const link = el("button", "nav-link", seite.label);
     link.setAttribute("role", "tab");
@@ -244,11 +284,62 @@ function seiten() {
   zeigen(liste.find((seite) => seite.name === aktuell) ?? liste[0]);
 }
 
+// ─── Einstellungen: Sprache, Akzentfarbe, hell oder dunkel ──────────────────
+
+function wahl(beschriftung, optionen, gewaehlt, aendern) {
+  const select = el("select", "form-select w-auto", ...optionen.map(([wert, text]) =>
+    new Option(text, wert)));
+  select.value = gewaehlt;
+  select.setAttribute("aria-label", beschriftung);
+  select.addEventListener("change", () => aendern(select.value));
+  return el("div", "d-flex justify-content-between align-items-center gap-2 my-2",
+    el("span", "", beschriftung), select);
+}
+
+function einstellungen() {
+  openDialog(t("settings"),
+    wahl(t("language"), languages().map((l) => [l, l.toUpperCase()]),
+      language(), (wert) => {
+        merken("lang", wert);
+        setLanguage(wert);
+        for (const dialog of document.querySelectorAll("dialog")) dialog.close();
+        beschriften();
+        seiten();
+        einstellungen();
+      }),
+    wahl(t("theme"), AKZENTE.map(([name, farbe]) => [farbe, name]), akzent,
+      (wert) => {
+        akzent = wert;
+        merken("bs-akzent", wert);
+        akzentSetzen();
+      }),
+    wahl(t("mode"), [["auto", t("auto")], ["light", t("light")],
+      ["dark", t("dark")]], modus, (wert) => {
+      modus = wert;
+      merken("mode", wert);
+      hellDunkel();
+    }));
+}
+
+/** Texte der Kopfzeile in der aktuellen Sprache */
+function beschriften() {
+  $("#sperren").setAttribute("aria-label", t("lock"));
+  $("#einstellungen").setAttribute("aria-label", t("settings"));
+  uhr.tick?.();
+}
+
+const sperre = setupLock(config.lock);
+$("#sperren").hidden = !config.lock?.pin;
+$("#sperren").addEventListener("click", () => sperre.lock());
+$("#einstellungen").addEventListener("click", einstellungen);
+beschriften();
+
 function uhr() {
   const node = $("#uhr");
   const tick = () => (node.textContent = new Date().toLocaleTimeString(locale(),
     { hour: "2-digit", minute: "2-digit" }));
   tick();
+  uhr.tick = tick;
   setInterval(tick, 10000);
 }
 
