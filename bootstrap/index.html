@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart-Home-Dashboard · Bootstrap</title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <style>
+    /* Bootstrap-Vorgaben auf 44 px Bedienfläche bringen */
+    .btn, .form-select, .nav-link { min-height: 44px; min-width: 44px; }
+    .form-switch .form-check-input { width: 3.2em; height: 1.8em; cursor: pointer; }
+    .form-switch { min-height: 44px; display: flex; align-items: center; }
+    .form-range { min-height: 44px; }
+    .form-control-color { width: 44px; height: 44px; }
+    .nav-pills { flex-wrap: nowrap; overflow-x: auto; }
+    .nav-pills .nav-link { white-space: nowrap; }
+    #status { width: .8rem; height: .8rem; }
+    .zahl { width: 3.6em; font-variant-numeric: tabular-nums; }
+  </style>
+  <!-- aus dem Dashboard: Bibliothek und Einstellungen -->
+  <script src="../lib/openhab.min.js"></script>
+  <script src="../config.js"></script>
+  <script type="module" src="ansicht.js"></script>
+</head>
+<body class="bg-body-tertiary">
+  <nav class="navbar bg-body border-bottom sticky-top">
+    <div class="container-fluid gap-2">
+      <span id="status" class="rounded-circle bg-secondary" role="img"></span>
+      <span class="navbar-brand me-auto text-truncate" id="titel">…</span>
+      <time id="uhr" class="fs-5 font-monospace"></time>
+    </div>
+    <div class="container-fluid pt-2">
+      <ul class="nav nav-pills w-100" id="raeume" role="tablist"></ul>
+    </div>
+  </nav>
+  <main class="container-fluid py-3">
+    <div class="row g-3" id="inhalt"></div>
+  </main>
+  <div id="hinweis" class="alert alert-danger position-fixed bottom-0 start-50
+    translate-middle-x mb-3" role="alert" hidden></div>
+</body>
+</html>
